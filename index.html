@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Özel API ile Instagram Reels Paylaşma</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        #notification {
+            transition: opacity 0.3s, transform 0.3s;
+        }
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #db2777; /* pink-600 */
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white flex items-center justify-center min-h-screen p-4">
+
+    <div class="w-full max-w-4xl mx-auto">
+        
+        <!-- Giriş Ekranı -->
+        <div id="login-screen" class="text-center">
+            <h1 class="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500 text-transparent bg-clip-text">
+                Instagram Reels API Platformu
+            </h1>
+            <p class="text-gray-400 text-lg mb-8 max-w-2xl mx-auto">
+                Özel API referansımızı kullanarak Reels videolarınızı programatik olarak kolayca paylaşın.
+            </p>
+            <button id="login-button" class="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold py-3 px-8 rounded-full shadow-lg transform hover:scale-105 transition-transform duration-300 ease-in-out flex items-center justify-center mx-auto">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                Instagram ile Giriş Yap (Graph API)
+            </button>
+        </div>
+        
+        <!-- Yükleniyor Ekranı -->
+        <div id="loading-screen" class="hidden text-center">
+            <div class="loader"></div>
+            <p class="text-gray-400">Instagram'a bağlanılıyor ve yetkilendirme yapılıyor...</p>
+        </div>
+
+        <!-- API Referans Ekranı (Giriş sonrası) -->
+        <div id="api-screen" class="hidden">
+            <div class="flex flex-col sm:flex-row justify-between sm:items-center mb-8 gap-4">
+                <div>
+                     <h2 class="text-3xl font-bold text-gray-200">API Bilgileri ve Referans</h2>
+                     <p id="welcome-message" class="text-purple-300 mt-1"></p>
+                </div>
+                <button id="logout-button" class="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-colors duration-300 self-start sm:self-center">
+                    Çıkış Yap
+                </button>
+            </div>
+
+            <!-- API Token Bölümü -->
+            <div class="bg-gray-800 p-6 rounded-lg mb-8 shadow-xl">
+                <h3 class="text-xl font-semibold mb-3 text-pink-400">API Token'ınız</h3>
+                <p class="text-gray-400 mb-4">Bu token, API'ye yapacağınız tüm isteklerde yetkilendirme için gereklidir. Güvenli bir yerde saklayın.</p>
+                <div class="flex items-center bg-gray-900 p-3 rounded-md">
+                    <code id="api-token-display" class="text-green-400 flex-grow select-all break-all"></code>
+                    <button class="copy-button ml-4 text-gray-400 hover:text-white transition-colors flex-shrink-0" data-copy-target="#api-token-display">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- API Endpoint Referansı -->
+            <div class="bg-gray-800 p-6 rounded-lg shadow-xl">
+                <h3 class="text-xl font-semibold mb-1 text-purple-400">Endpoint: Reels Paylaşma</h3>
+                <p class="text-sm font-mono text-gray-500 mb-3"><span class="font-bold text-green-500">POST</span> /v1/reels/upload</p>
+                <p class="text-gray-400 mb-4">Yeni bir Reels videosu paylaşmak için bu endpoint'i kullanın. İstek `multipart/form-data` formatında olmalıdır.</p>
+                
+                <div class="relative bg-gray-900 p-4 rounded-md text-sm">
+                    <button class="copy-button absolute top-2 right-2 text-gray-400 hover:text-white transition-colors" data-copy-target="#curl-example">
+                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                    </button>
+                    <pre><code id="curl-example" class="language-bash text-gray-300 overflow-x-auto block whitespace-pre-wrap"><span class="text-pink-400">curl</span> --location --request POST 'https://api.sizinplatform.com/v1/reels/upload' <span class="text-gray-500">\</span>
+--header 'Authorization: Bearer <span class="text-green-400 font-bold" id="curl-token-placeholder">SENIN_API_TOKENIN</span>' <span class="text-gray-500">\</span>
+--form 'video_url="<span class="text-yellow-400">https://ornek.com/videom.mp4</span>"' <span class="text-gray-500">\</span>
+--form 'caption="<span class="text-yellow-400">Bu benim harika Reels videom! #teknoloji #api</span>"'</code></pre>
+                </div>
+                 <div class="mt-6">
+                    <h4 class="font-semibold text-gray-300 mb-2">Parametreler:</h4>
+                    <ul class="list-disc list-inside text-gray-400 space-y-2">
+                        <li><code class="bg-gray-700 text-green-400 px-2 py-1 rounded text-sm">Authorization</code> <span class="text-red-400">(Header, Gerekli)</span>: <code class="text-gray-300">Bearer</code> ön eki ile birlikte API Token'ınız.</li>
+                        <li><code class="bg-gray-700 text-green-400 px-2 py-1 rounded text-sm">video_url</code> <span class="text-red-400">(Form, Gerekli)</span>: Herkese açık, doğrudan erişilebilir video dosyasının URL'si.</li>
+                        <li><code class="bg-gray-700 text-green-400 px-2 py-1 rounded text-sm">caption</code> <span class="text-blue-400">(Form, Opsiyonel)</span>: Video başlığı ve etiketler.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bildirim Kutusu -->
+    <div id="notification" class="fixed bottom-5 right-5 bg-green-500 text-white py-2 px-5 rounded-lg shadow-lg opacity-0 transform translate-y-2">
+        Kopyalandı!
+    </div>
+
+    <script>
+        
+        // --- Yapılandırma ---
+        const FACEBOOK_APP_ID = '951663640456761'; // Kendi Facebook/Meta Uygulama ID'nizi buraya girin
+        const REDIRECT_URI = 'https://www.google.com'; // Meta for Developers'da tanımladığınız yönlendirme URI'si
+        
+        // --- DOM Elementleri ---
+        const loginScreen = document.getElementById('login-screen');
+        const loadingScreen = document.getElementById('loading-screen');
+        const apiScreen = document.getElementById('api-screen');
+        const loginButton = document.getElementById('login-button');
+        const logoutButton = document.getElementById('logout-button');
+        const apiTokenDisplay = document.getElementById('api-token-display');
+        const curlTokenPlaceholder = document.getElementById('curl-token-placeholder');
+        const welcomeMessage = document.getElementById('welcome-message');
+        const notification = document.getElementById('notification');
+        const copyButtons = document.querySelectorAll('.copy-button');
+
+        // --- Fonksiyonlar ---
+        function showNotification(message, isError = false) {
+            notification.textContent = message;
+            notification.className = `fixed bottom-5 right-5 text-white py-2 px-5 rounded-lg shadow-lg opacity-0 transform translate-y-2 ${isError ? 'bg-red-500' : 'bg-green-500'}`;
+            notification.classList.remove('opacity-0', 'translate-y-2');
+            setTimeout(() => {
+                notification.classList.add('opacity-0', 'translate-y-2');
+            }, 3000);
+        }
+
+        function copyToClipboard(text) {
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                showNotification('Panoya kopyalandı!');
+            } catch (err) {
+                showNotification('Kopyalanamadı!', true);
+            }
+            document.body.removeChild(textArea);
+        }
+        
+        function updateUiWithToken(token, username = 'Kullanıcı') {
+            apiTokenDisplay.textContent = token;
+            curlTokenPlaceholder.textContent = token;
+            welcomeMessage.textContent = `Hoş geldin, ${username}!`;
+            loadingScreen.classList.add('hidden');
+            loginScreen.classList.add('hidden');
+            apiScreen.classList.remove('hidden');
+        }
+
+        async function exchangeCodeForToken(code) {
+            console.log("Alınan Yetkilendirme Kodu:", code);
+            console.log("Bu kod, access token almak için backend'e gönderilecek.");
+            
+            // Gerçekte, bu isteği kendi backend sunucunuza yapmalısınız.
+            // Örn: await fetch('https://sizin-backend-adresiniz.com/exchange-token', { method: 'POST', body: JSON.stringify({ code }) });
+            
+            // --- Sadece Simülasyon Amaçlı ---
+            return new Promise(resolve => {
+                setTimeout(() => {
+                    const fakeToken = 'FAKE_GRAPH_API_TOKEN_' + [...Array(128)].map(() => Math.floor(Math.random() * 16).toString(16)).join('');
+                    const fakeUsername = 'graph_api_kullanicisi';
+                    resolve({ token: fakeToken, username: fakeUsername });
+                }, 1500);
+            });
+        }
+        
+        // --- Olay Dinleyicileri ve Sayfa Yükleme Mantığı ---
+        
+        loginButton.addEventListener('click', () => {
+            if (FACEBOOK_APP_ID === 'YOUR_FACEBOOK_APP_ID' || REDIRECT_URI === 'https://your-live-website-url.com/') {
+                alert('Lütfen script içerisindeki FACEBOOK_APP_ID ve REDIRECT_URI değişkenlerini kendi bilgilerinizle güncelleyin.');
+                return;
+            }
+            
+            // ** DEĞİŞİKLİK: ** Instagram Graph API (içerik yayınlama) için Facebook girişi gereklidir.
+            // Gerekli izinler (scope) de farklıdır.
+            const scope = "instagram_content_publish,pages_show_list,pages_read_engagement";
+            
+            // ** DEĞİŞİKLİK: ** Yetkilendirme URL'i artık Facebook'un OAuth diyalog penceresidir.
+            const authUrl = `https://www.facebook.com/v19.0/dialog/oauth?client_id=${FACEBOOK_APP_ID}&redirect_uri=${REDIRECT_URI}&scope=${scope}&response_type=code`;
+            
+            window.location.href = authUrl;
+        });
+
+        logoutButton.addEventListener('click', () => {
+            apiTokenDisplay.textContent = '';
+            curlTokenPlaceholder.textContent = 'SENIN_API_TOKENIN';
+            welcomeMessage.textContent = '';
+            apiScreen.classList.add('hidden');
+            loginScreen.classList.remove('hidden');
+        });
+
+        copyButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const target = document.querySelector(button.dataset.copyTarget);
+                if (target) copyToClipboard(target.textContent);
+            });
+        });
+
+        window.addEventListener('load', async () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const code = urlParams.get('code');
+
+            if (code) {
+                loginScreen.classList.add('hidden');
+                loadingScreen.classList.remove('hidden');
+                window.history.replaceState({}, document.title, window.location.pathname);
+                
+                try {
+                    const { token, username } = await exchangeCodeForToken(code);
+                    if (token) {
+                         updateUiWithToken(token, username);
+                    } else {
+                        throw new Error("Backend'den token alınamadı.");
+                    }
+                } catch (error) {
+                    console.error("Token alma hatası:", error);
+                    showNotification("Giriş sırasında bir hata oluştu.", true);
+                    loadingScreen.classList.add('hidden');
+                    loginScreen.classList.remove('hidden');
+                }
+            }
+        });
+    </script>
+</body>
+</html>
+
